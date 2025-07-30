@@ -9,7 +9,7 @@ df_prompt = pd.read_csv('risk_prompt_metrics.csv')           # 欄位: risk_name
 df_ens    = pd.read_csv('ensemble_stats_by_risk.csv')    # 欄位: 風險名稱, F1_rel
 
 # 2. Pivot 並合併 Ensemble
-df_heat = df_prompt.pivot(index='risk_name', columns='prompt_type', values='rel_recall')
+df_heat = df_prompt.pivot(index='risk_name', columns='prompt_type', values='rel_recall') # 要畫其他的指標改 values
 rename_map = {
     'ZERO_SHOT_PROMPT'       : 'Zero-shot',
     'ZERO_SHOT_COT_PROMPT'   : 'Zero-shot CoT',
@@ -18,7 +18,7 @@ rename_map = {
 }
 df_heat.rename(columns=rename_map, inplace=True)
 
-df_heat['Ensemble'] = df_ens.set_index('風險名稱')['Recall']
+df_heat['Ensemble'] = df_ens.set_index('風險名稱')['Recall'] # 要畫其他的指標把 Recall 改掉
 
 # 3. 依 Ensemble F1 值由大到小排序
 df_heat = df_heat.sort_values('Ensemble', ascending=False)
@@ -50,5 +50,5 @@ ax.set_ylabel('Risk name')
 fig.colorbar(im, ax=ax, label='Recall score')
 
 plt.tight_layout()
-plt.savefig(f'prompt_and_ensemble_heatmap_recall.png', dpi=300)
+plt.savefig(f'prompt_and_ensemble_heatmap_recall.png', dpi=300) # 要畫其他的指標把 recall 改掉
 plt.show()
