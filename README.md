@@ -82,3 +82,24 @@
   - 第三步模型生成的答案（for_dev 版）：
   output_generation/phase3/{company}_gen_result_for_dev.csv
 - **輸出**：output_annotated/phase3/{company}_dev_result_with_label.csv
+
+## 計算單一公司指標
+- **code**：`6_calculate_company_acc.py`
+- **目的**：對單一公司（company_name）計算各提示策略（prompt_type）的 真陽性數量 (TP)、假陽性數量 (FP)、部分假陰性數量（FN_partial）、部分真陰性數量 (TN_partial)，以及 Precision、Relative Recall、
+Relative F1
+- **輸入**：
+  - 檔案：output_annotated/phase3/{company_name}_dev_result_with_label.csv
+  - 修改檔案開頭: company_name (e.g. "微星2377")
+- **輸出**：在終端機（console）列印各 prompt_type 的指標表格
+  Prompt type | TP | FP | FN_partial | TN_partial | precision | rel_recall | rel_f1
+
+## 計算多家公司加總指標
+- **code**：`7_calculate_micro_acc.py`
+- **目的**：對多家公司／多筆結果進行「Micro」（加總）級別的指標計算
+將所有 prompt_type 的 TP、FP、FN_partial 相加，再計算 Precision、Relative Recall、Relative F1
+- **輸入**：
+  - 檔案：output_acc/phase2_all_acc.csv (e.g. 在此已 merge 所有 phase 2 公司結果)
+- **輸出**：在終端機列印 micro 指標表格
+  prompt_type | TP | FP | FN_partial | precision | rel_recall | f1_rel
+
+
