@@ -1,4 +1,5 @@
 # 風險例子小工具
+
 **few-shot_example_preprocess 資料夾中**
 - **目的**：用於將人工標註的「正例」進行增強與預處理，包含：
 1. `gen_example_bold.py`  
@@ -10,6 +11,7 @@
 
 # 資料前處理 
 - **code**：`0_extract_first_five_page_from_pdf`
+- **目的**：從前五頁中識別特定章節（雜訊），並計算實際頁碼範圍以供去除。
 
 
 # RAG Pipeline 
@@ -102,4 +104,90 @@ Relative F1
 - **輸出**：在終端機列印 micro 指標表格
   prompt_type | TP | FP | FN_partial | precision | rel_recall | f1_rel
 
+
+# 實驗後續進一步分析（risk 維度）
+
+**analysis 資料夾中**
+## 合併各公司檔案
+- **code**：`merge_all_company_result.py`
+- **目的**：將多家公司生成且已標註的 dev 結果檔合併成一個完整表格，方便後續全域分析。
+- **輸入**：output_annotated/phase3/*_dev_result_with_label.csv
+- **輸出**：full_annotated_table.csv
+
+## 不同 risk 表現
+- **code**：`risk_level_analysis.py`
+- **目的**：從所有公司 *_dev_result_with_label.csv 合併計算，對每個風險 × prompt_type 計算 TP／FP／FN_partial、Precision、Recall、F1，彙整每風險平均與標準差指標
+- **輸入**：output_annotated/phase3/*_dev_result_with_label.csv
+- **輸出**：
+  - risk_prompt_metrics.csv
+  - risk_stats_numeric.csv
+  - risk_f1_average.csv
+
+## 加入 CoT 的指標變化 - 視覺化
+- **code**：`risk_metrics_boxplot.py`
+- **目的**：繪製三張箱型圖，呈現 ΔPrecision、ΔRecall、ΔF1 (CoT − Non-CoT) 的分布，並印出 summary 統計。
+- **輸入**：risk_prompt_metrics.csv
+- **輸出**：
+  - 視窗顯示箱型圖
+  - 終端機列印 summary statistics (median, mean, min, max)
+
+## Ensemble 計算
+- **code**：`ensemble_result.py`
+- **目的**：以「多數投票」(vote ≥ THRESHOLD) 的方式，將各 prompt_type 的 chunk-level 預測結果合併成一個 ensemble 預測，並對每個風險 (risk_code) 計算 Precision、Recall、F1_rel。
+- **輸入**：full_annotated_table.csv
+  - THRESHOLD (int)：投票門檻，預設 2（票數 ≥ 2 即判為正例
+- **輸出**：ensemble_stats_by_risk.csv
+
+
+## 畫各 prompt & ensemble 的 heatmap
+- **code**：`risk_heatmap.py`
+- **目的**：繪製各 prompt_type 及 Ensemble 在各風險上的 Recall heatmap（也可改成畫 precision & F1），並依 Ensemble 排序。
+- **輸入**：
+  - risk_prompt_metrics.csv
+  - ensemble_stats_by_risk.csv
+- **輸出**：prompt_and_ensemble_heatmap_recall.png
+
+
+## 風險在 prompt 最高次數計算＆視覺化
+- **code**：`risk_count_max_prompt.py`
+- **目的**：統計在每個風險上哪種 prompt_type 拿到最高 F1，並列出各 prompt_type 的勝出次數。
+- **輸入**：risk_prompt_metrics.csv
+- **輸出**：終端機列印四種 prompt_type 的勝出次數
+
+-- 
+
+- **code**：`risk_highest_prompt.py`
+- **目的**：繪製長條圖：顯示各 prompt_family 在多少風險上取得最高 F1。
+- **輸入**：程式中已硬編碼 prompt_types 與對應 wins 數值
+- **輸出**：於視窗顯示條形圖
+
+
+
+# 實驗後續進一步分析（prompt 維度&其他）
+
+## 不同 prompt 表現
+- **code**：`prompt_level_analysis.py`
+- **目的**：對每種 prompt_type 計算 TP/FP/FN 及 precision/recall/f1，並依 F1 排序輸出。
+- **輸入**：full_annotated_table.csv
+- **輸出**：在終端機顯示 prompt | TP | FP | FN | precision | recall | f1
+
+## 計算各 prompt 表現是否相似
+- **code**：`prompt_irr.py`
+- **目的**：計算不同提示策略間的檢索「出現」矩陣（chunk × prompt），並依對組合計算 Jaccard 相似度，衡量提示間的重疊／差異。
+- **輸入**：full_annotated_table.csv
+- **輸出**：在終端機顯示各 prompt pair 的 Jaccard 指標
+
+## CoT 思考過程取 sample 供分析
+- **code**：`cot_reasoning_select.py`
+- **目的**：從 full_annotated_table.csv 中篩選出兩種 CoT 提示（ZERO_SHOT_COT_PROMPT、FEW_SHOT_COT_PROMPT）且有 Reasoning 過程的列，隨機抽樣各 15 筆真陽性（TP），輸出質性檢視用樣本。
+- **輸入**：full_annotated_table.csv
+- **輸出**：cot_sample_2.csv（檔名可改）
+
+## 揭露類別分析
+- **code**：`disclosure_type_metrics.py`
+- **目的**：計算三種揭露類型（關鍵字、風險描述、風險因應）的 TP、FP、FN 並輸出 Precision/Recall/F1。
+- **輸入**：disclosure_type_annotation.csv
+  - 欄位至少包含：類別_關鍵字、類別_風險描述、類別_風險因應、揭露類別（在 google sheet 標註完下載下來）
+- **輸出**：在終端機顯示一個 DataFrame，包含 
+  類別 | TP | FP | FN | Precision | Recall | F1
 
