@@ -1,11 +1,19 @@
 import os
+import re
 import pandas as pd
 from langchain.schema import Document
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
+# 建立「去控制字元」工具
+CTRL = re.compile(r'[\x00-\x1F\x7F-\x9F]')
+
+def strip_ctrl(text: str) -> str:
+    return CTRL.sub("", text) if isinstance(text, str) else text
 
 def model_tune_params(path, model_name, chunk_sizes, chunk_overlaps):
     tuned_params = []
@@ -32,7 +40,7 @@ def split_embedding_createDB(
     hf_embeddings = HuggingFaceEmbeddings(model_name=model_name)
 
     # load and split the Document
-    loader = PyPDFLoader(path)
+    loader = PyMuPDFLoader(path)         
 
     splitter = RecursiveCharacterTextSplitter(
         separators="\n", chunk_size=chunk_size, chunk_overlap=chunk_overlap
@@ -41,8 +49,12 @@ def split_embedding_createDB(
     texts = loader.load_and_split(splitter)
     print("Number of chunks after splitting: ", len(texts))
 
-    print("Adjusting page metadata from 0-based index to 1-based page number...")
+    print("Cleaning control characters & adjusting metadata...")
     for index, doc in enumerate(texts):
+        # 去掉不可顯示字元
+        doc.page_content = strip_ctrl(doc.page_content)
+
+        # page 轉成 1-based
         if "page" in doc.metadata and isinstance(doc.metadata["page"], int):
             doc.metadata["page"] += 1
         else:
@@ -73,6 +85,7 @@ def split_embedding_createDB(
 if __name__ == "__main__":
     dir_path = "2024_report_transformed"
     paths = [f for f in os.listdir("2024_report_transformed") if f.endswith(".pdf")]
+    # paths = ["2024年永續報告書(中)皇普2528.pdf"]
     model_name = "moka-ai/m3e-base"
     chunk_sizes = [300]  # 200, 300, 500, 800
     chunk_overlaps = [50]  # 50, 100
