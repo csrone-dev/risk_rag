@@ -135,7 +135,7 @@ Relative F1
 - **code**：`ensemble_result.py`
 - **目的**：以「多數投票」(vote ≥ THRESHOLD) 的方式，將各 prompt_type 的 chunk-level 預測結果合併成一個 ensemble 預測，並對每個風險 (risk_code) 計算 Precision、Recall、F1_rel。
 - **輸入**：full_annotated_table.csv
-  - THRESHOLD (int)：投票門檻，預設 2（票數 ≥ 2 即判為正例
+  - THRESHOLD (int)：投票門檻，預設 2（票數 ≥ 2 即判為正例）
 - **輸出**：ensemble_stats_by_risk.csv
 
 
